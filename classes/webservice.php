@@ -239,9 +239,14 @@ class mod_zoom_webservice {
         $data['page_size'] = ZOOM_MAX_RECORDS_PER_CALL;
         $reportcheck = explode('/', $url);
         $isreportcall = in_array('report', $reportcheck);
+        $callresult = null;
         // The $currentpage call parameter is 1-indexed.
         for ($currentpage = $numpages = 1; $currentpage <= $numpages; $currentpage++) {
             $data['page_number'] = $currentpage;
+            if (isset($callresult->next_page_token) && $callresult->next_page_token != '') {
+                $data['next_page_token'] = $callresult->next_page_token;
+                unset($data['page_number']);
+            }
             $callresult = null;
             if ($isreportcall) {
                 $numcalls = get_config('mod_zoom', 'calls_left');
