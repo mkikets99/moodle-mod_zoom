@@ -395,11 +395,15 @@ class mod_zoom_webservice {
     public function get_schedule_for_users($identifier) {
         $url = "users/{$identifier}/schedulers";
 
+        $schedulerswithoutkey = [];
         $schedulers = [];
         try {
             $response = $this->_make_call($url);
             if (is_array($response->schedulers)) {
-                $schedulers = $response->schedulers;
+                $schedulerswithoutkey = $response->schedulers;
+            }
+            foreach ($schedulerswithoutkey as $s) {
+                $schedulers[$s->id] = $s;
             }
         } catch (moodle_exception $error) {
             // We don't care if this throws an exception.

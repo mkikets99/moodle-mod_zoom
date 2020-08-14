@@ -88,6 +88,46 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         // If updating, ensure we can get the meeting on Zoom.
         $isnew = empty($this->_cm);
+
+        /**
+         * @var $scheduleusers array Array of emails and proper names of Moodle users in this course that can add Zoom meetings, and the user can schedule.
+        */
+        $scheduleusers = [];
+
+        // This will either be false (they can't) or the list of users they can schedule.
+        $canschedule = $service->get_schedule_for_users($USER->email);
+        $canschedule[$zoomuser->id] = new stdClass();
+        $canschedule[$zoomuser->id]->email = $USER->email;
+        if (!empty($canschedule)) {
+            // Get list of schedule for users if supported.
+            // List of users who can use Zoom mod in this class.
+            // We can use $this->context as this is set either to the constructor or the activity's context
+            // if it is an existing activity. This is good as the cap could be overridden in the activity permissions.
+            $moodleusers = get_enrolled_users($this->context, 'mod/zoom:addinstance', 0, 'u.*', 'lastname');
+            if (!$isnew && $zoomuser->id !== $this->current->host_id) {
+                // Get intersection of current host's schedulers and $USER's schedulers to prevent zoom errors
+                $currenthostschedulers = $service->get_schedule_for_users($this->current->host_id);
+                if (!empty($currenthostschedulers)) {
+                    // Since this is the second argument to array_intersect_key, the entry from $canschedule will be used, so we can just use true to avoid a service call.
+                    $currenthostschedulers[$this->current->host_id] = true;
+                }
+                $canschedule = array_intersect_key($canschedule, $currenthostschedulers);
+            }
+            foreach ($canschedule as $zoomuserinfo) {
+                $zoomemail = $zoomuserinfo->email;
+                foreach ($moodleusers as $muser) {
+                    if ($muser->email === $USER->email) {
+                        $scheduleusers[$USER->email] = get_string('scheduleforself', 'zoom');
+                        break;
+                    }
+                    if (strtolower($muser->email) === strtolower($zoomemail)) {
+                        $scheduleusers[$muser->email] = fullname($muser);
+                        break;
+                    }
+                }
+            }
+        }
+
         $meetinginfo = new stdClass();
         if (!$isnew) {
             try {
@@ -238,6 +278,8 @@ class mod_zoom_mod_form extends moodleform_mod {
                 $mform->disabledIf('schedule_for', 'change_schedule_for');
                 $mform->addElement('checkbox', 'change_schedule_for', get_string('changehost', 'zoom'));
                 $mform->setDefault('schedule_for', $service->get_user($this->current->host_id)->email);
+            } else {
+                $mform->setDefault('schedule_for', $USER->email);
             }
         }
 
