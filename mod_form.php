@@ -251,9 +251,9 @@ class mod_zoom_mod_form extends moodleform_mod {
             if (!$isnew) {
                 $mform->disabledIf('schedule_for', 'change_schedule_for');
                 $mform->addElement('checkbox', 'change_schedule_for', get_string('changehost', 'zoom'));
-                $mform->setDefault('schedule_for', $service->get_user($this->current->host_id)->email);
+                $mform->setDefault('schedule_for', strtolower($service->get_user($this->current->host_id)->email));
             } else {
-                $mform->setDefault('schedule_for', $USER->email);
+                $mform->setDefault('schedule_for', strtolower($USER->email));
             }
         }
 
