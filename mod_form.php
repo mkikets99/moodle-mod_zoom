@@ -114,14 +114,17 @@ class mod_zoom_mod_form extends moodleform_mod {
                 $canschedule = array_intersect_key($canschedule, $currenthostschedulers);
             }
             foreach ($canschedule as $zoomuserinfo) {
-                $zoomemail = $zoomuserinfo->email;
+                $zoomemail = strtolower($zoomuserinfo->email);
+                if(isset($scheduleusers[$zoomemail])) {
+                    continue;
+                }
+                if ($zoomemail === strtolower($USER->email)) {
+                    $scheduleusers[$zoomemail] = get_string('scheduleforself', 'zoom');
+                    continue;
+                }
                 foreach ($moodleusers as $muser) {
-                    if ($muser->email === $USER->email) {
-                        $scheduleusers[$USER->email] = get_string('scheduleforself', 'zoom');
-                        break;
-                    }
-                    if (strtolower($muser->email) === strtolower($zoomemail)) {
-                        $scheduleusers[$muser->email] = fullname($muser);
+                    if ($zoomemail === strtolower($muser->email)) {
+                        $scheduleusers[$zoomemail] = fullname($muser);
                         break;
                     }
                 }
@@ -347,7 +350,7 @@ class mod_zoom_mod_form extends moodleform_mod {
             $scheduleok = false;
             foreach ($scheduleusers as $zuser) {
                 if (strtolower($zuser->email) === strtolower($data['schedule_for'])) {
-                    // Found a matching email address in teh Zoom users list.
+                    // Found a matching email address in the Zoom users list.
                     $scheduleok = true;
                     break;
                 }
